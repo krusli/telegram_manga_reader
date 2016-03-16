@@ -22,7 +22,7 @@ Follow the instructions at [Telegram Bot documentation](https://core.telegram.or
 
 Copy and paste the token and insert it to line 12 of *app.py*. Example: `12| token = '216151552:AAEnqOOpqjfEkFoH-m3gnTw-aWtvog7a6Ug'`
 
-To run the bot, simply type `python app.py` in a Command Prompt or Terminal instance. Make sure you have Python 3.x installed. If this still does not work, try `python3 app.py`.
+To run the bot, simply enter `python app.py` in a Command Prompt or Terminal instance. Make sure you have Python 3.x installed. If this still does not work, try `python3 app.py`.
 
 The `Procfile, requirements.txt and runtime.txt` files are pre-requisites for running the application in Heroku. Refer to this [guide](https://devcenter.heroku.com/articles/git) for pushing the repo to your Heroku instance to run the bot remotely.
 

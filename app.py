@@ -128,6 +128,7 @@ def main():
     except FileNotFoundError:
         last_update = 0
 
+    # create a multiprocessing Pool
     pool = multiprocessing.Pool(processes = 4)
 
     while True:
@@ -173,6 +174,7 @@ def main():
                                 try:
                                     words = message.text.split()[1:]
                                     syntax_test = words[1]
+                                    # create asynchronous worker process
                                     pool.apply_async(manga.open_manga_chapter, (' '.join(words[0:-1]), words[-1], message.chat_id, message.message_id))
                                 except IndexError:
                                     send.message_reply(message.chat_id, 'Please use the correct format for /openchapter.\nExample: /openchapter gintama 1', message.message_id)

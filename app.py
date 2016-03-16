@@ -65,7 +65,10 @@ class manga_class:
             chapters = json.loads(requests.get("http://www.mangaeden.com/api/manga/" + manga_id + "/").text)
             chapter_formatted_list = []
             for entry in chapters['chapters']:
-                chapter_formatted_list.append(str(entry[0]) + ": " + "_" + str(entry[2]) + "_")
+                if entry[2] == None:
+                    chapter_formatted_list.append(str(entry[0])
+                else:
+                    chapter_formatted_list.append(str(entry[0]) + ": " + str(entry[2]))
             return [chapter_formatted_list[i:i+100] for i in range(0,len(chapter_formatted_list), 100)]
         else:
             return ["Manga with the title " + title + " not found."]
@@ -167,7 +170,7 @@ def main():
                                     syntax_test = message.text.split()[1]
                                     message.text = message.text[14:]
                                     for sublist in manga.list_chapters(message.text):
-                                        send.markdown(message.chat_id, '\n'.join(sublist))
+                                        send.message(message.chat_id, '\n'.join(sublist))
                                 except IndexError:
                                     send.message_reply(message.chat_id, "Please use the correct format for the function. Example: /listchapters gintama", message.message_id)
                             if message.text.startswith('/openchapter'):

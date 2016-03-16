@@ -66,7 +66,7 @@ class manga_class:
             chapter_formatted_list = []
             for entry in chapters['chapters']:
                 if entry[2] == None:
-                    chapter_formatted_list.append(str(entry[0]))
+                    chapter_formatted_list.append(str(entry[0]) + ":")
                 else:
                     chapter_formatted_list.append(str(entry[0]) + ": " + str(entry[2]))
             return [chapter_formatted_list[i:i+100] for i in range(0,len(chapter_formatted_list), 100)]

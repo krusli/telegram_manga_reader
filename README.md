@@ -15,6 +15,7 @@ I created this python-based Telegram manga reader bot to read manga using the Ma
 If you need any help in setting up a bot, refer to the [Telegram Bot documentation](https://core.telegram.org/bots).
 
 **How to set up**
+
 Follow the instructions at [Telegram Bot documentation](https://core.telegram.org/bots) to set up your own bot. Once you have set up your bot, you will receive an API token.
 
 ![If you're thinking of using this API token, I've revoked it already.](token.png)

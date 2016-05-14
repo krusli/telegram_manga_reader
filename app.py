@@ -1,7 +1,7 @@
-import requests, json, csv, random, os, multiprocessing
+import requests, json, csv, random, os, multiprocessing, html, time, os
 
 # URL and auth token for bot requests
-token = '' # enter the API token from BotFather here
+token =  # enter the API token from BotFather here
 url = 'https://api.telegram.org/bot%s/' % token
 
 # Create a `Session` instance to customize how `requests` handles making HTTP requests.
@@ -59,6 +59,10 @@ class manga_class:
             if entry['t'].lower() == title.lower():
                 return entry['i']
         return False
+    def get_title(self, title):
+        for entry in self.manga_list['manga']:
+            if entry['t'].lower() == title.lower():
+                return entry['t']
     def list_chapters(self, title):
         manga_id = self.get_mangaID(title)
         if manga_id is not False:
@@ -68,7 +72,7 @@ class manga_class:
                 if entry[2] == None:
                     chapter_formatted_list.append(str(entry[0]) + ": -")
                 else:
-                    chapter_formatted_list.append(str(entry[0]) + ": " + str(entry[2]))
+                    chapter_formatted_list.append(str(entry[0]) + ": " + html.unescape(str(entry[2])))
             return [chapter_formatted_list[i:i+100] for i in range(0,len(chapter_formatted_list), 100)]
         else:
             return ["Manga with the title " + title + " not found."]
@@ -78,10 +82,31 @@ class manga_class:
             chapters = json.loads(requests.get("http://www.mangaeden.com/api/manga/" + manga_id + "/").text)
             chapter_formatted_list = []
             for entry in chapters['chapters']:
-                chapter_formatted_list.append(str(entry[0]) + ": " + str(entry[2]))
+                chapter_formatted_list.append(str(entry[0]) + ": " + html.unescape(str(entry[2])))
             return str(chapter_formatted_list[0])
         else:
             return "Manga with the title " + title + " not found."
+
+    def manga_info(self, title):
+        manga_id = self.get_mangaID(title)
+        if manga_id is not False:
+            title_data = json.loads(requests.get("http://www.mangaeden.com/api/manga/" + manga_id + "/").text)
+            genres = []
+            for entry in title_data['categories']:
+                genres.append(entry)
+            title = self.get_title(title)    # get mangaeden title
+            author = title_data['author']
+            genres = ", ".join(genres) # convert list to comma separated string
+            synopsis = html.unescape(title_data['description'])
+            output_string = "*" + title + "* - " + author + "\n\n"
+            output_string += "_Genres_\n"
+            output_string += genres + "\n\n"
+            output_string += "_Synopsis_\n"
+            output_string += synopsis
+            return output_string
+        else:
+            return "Manga with the title " + title + " not found."
+
 
     def open_manga_chapter(self, title, chapterno, chatid, msgid):	# opens an entire manga chapter
         manga_ID = self.get_mangaID(title)
@@ -92,7 +117,7 @@ class manga_class:
         try: # check if chapter number is valid
             float(chapterno)
         except ValueError:
-            send_message_as_reply(chatid, "Please enter a chapter number.", msgid)
+            send.message_reply(chatid, "Please enter a chapter number.", msgid)
             return
 
         chapter_ID = 0
@@ -103,14 +128,15 @@ class manga_class:
                 break
 
         if chapter_ID == 0:
-            send_message_as_reply(chatid, "Chapter not found.", msgid)
-
-        pages = json.loads(requests.get('http://www.mangaeden.com/api/chapter/' + chapter_ID + '/').text)  # list of pages of current manga
-        for entry in sorted(pages['images']):
-            page_ID = entry[1]
-            filename = download_file_to_tempfile('https://cdn.mangaeden.com/mangasimg/' + page_ID)
-            send.send_photo(chatid, filename)
-        return
+            send.message_reply(chatid, "Chapter not found.", msgid)
+        else:
+            pages = json.loads(requests.get('http://www.mangaeden.com/api/chapter/' + chapter_ID + '/').text)  # list of pages of current manga
+            for entry in sorted(pages['images']):
+                page_ID = entry[1]
+                filename = download_file_to_tempfile('https://cdn.mangaeden.com/mangasimg/' + page_ID)
+                send.send_photo(chatid, filename)
+                os.remove(filename)
+            return
 
 manga = manga_class()
 manga.manga_list = manga.load_manga()
@@ -181,6 +207,13 @@ def main():
                                     pool.apply_async(manga.open_manga_chapter, (' '.join(words[0:-1]), words[-1], message.chat_id, message.message_id))
                                 except IndexError:
                                     send.message_reply(message.chat_id, 'Please use the correct format for /openchapter.\nExample: /openchapter gintama 1', message.message_id)
+                            if message.text.startswith('/mangainfo'):
+                                try:
+                                    syntax_test = message.text.split()[1]
+                                    message.text = message.text[11:]
+                                    send.markdown(message.chat_id, manga.manga_info(message.text))
+                                except IndexError:
+                                    send.message_reply(message.chat_id, "Please use the correct format for the function. Example: /mangainfo gintama", message.message_id)
 
 
                         except SystemExit:

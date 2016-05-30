@@ -13,21 +13,29 @@ session.mount("https://", requests.adapters.HTTPAdapter(max_retries=5))
 
 class send_class:
     def message(self, chatid, message_text):
-        requests.get(url + 'sendMessage', params = dict(chat_id = chatid, text = message_text))
+        requests.get(url + 'sendMessage', params = dict(chat_id = chatid, \
+            text = message_text))
     def message_reply(self, chatid, message_text, message_id):
-        requests.get(url + 'sendMessage', params = dict(chat_id = chatid, text = message_text, reply_to_message_id = message_id))
+        requests.get(url + 'sendMessage', params = dict(chat_id = chatid, \
+            text = message_text, reply_to_message_id = message_id))
     def markdown(self, chatid, message_text):
-        requests.get(url + 'sendMessage', params = dict(chat_id = chatid, text = message_text, parse_mode = 'Markdown'))
+        requests.get(url + 'sendMessage', params = dict(chat_id = chatid, \
+            text = message_text, parse_mode = 'Markdown'))
     def markdown_reply(self, chatid, message_text, message_id):
-        requests.get(url + 'sendMessage', params = dict(chat_id = chatid, text = message_text, reply_to_message_id = message_id, parse_mode = 'Markdown'))
+        requests.get(url + 'sendMessage', params = dict(chat_id = chatid, \
+            text = message_text, reply_to_message_id = message_id, \
+            parse_mode = 'Markdown'))
     def action(self, chatid, bot_action):
-        requests.get(url + 'sendChatAction', params = dict(chat_id = chatid, action = bot_action))
+        requests.get(url + 'sendChatAction', params = dict(chat_id = chatid, \
+            action = bot_action))
     def send_photo(self, chatid, filename):
         self.action(chatid, 'upload_photo')
-        session.post(url + 'sendPhoto', data = dict(chat_id = chatid), files=dict(photo = open(filename, 'rb')))
+        session.post(url + 'sendPhoto', data = dict(chat_id = chatid), \
+            files = dict(photo = open(filename, 'rb')))
     def send_document(self, chatid, filename):
         self.action(chatid, 'upload_document')
-        session.post(url + 'sendDocument', data = dict(chat_id = chatid), files=dict(document = open(filename, 'rb')))
+        session.post(url + 'sendDocument', data = dict(chat_id = chatid), \
+            files = dict(document = open(filename, 'rb')))
 send = send_class()
 
 def download_file_to_tempfile(url):
@@ -52,8 +60,13 @@ def download_file_to_tempfile(url):
 
 # ----- MangaEden reader -----
 class manga_class:
+    manga_list_url = 'http://www.mangaeden.com/api/list/0/'
+    manga_chapters_url = "http://www.mangaeden.com/api/manga/"
+    manga_pages_url = 'http://www.mangaeden.com/api/chapter/'
+    manga_image_url = 'https://cdn.mangaeden.com/mangasimg/'
+
     def load_manga(self):
-        return (json.loads(requests.get('http://www.mangaeden.com/api/list/0/').text))
+        return (json.loads(requests.get(manga_list_url).text))
     def get_mangaID(self, title): # get manga_id from load_manga() JSON response
         for entry in self.manga_list['manga']:
             if entry['t'].lower() == title.lower():
@@ -66,23 +79,28 @@ class manga_class:
     def list_chapters(self, title):
         manga_id = self.get_mangaID(title)
         if manga_id is not False:
-            chapters = json.loads(requests.get("http://www.mangaeden.com/api/manga/" + manga_id + "/").text)
+            chapters = json.loads(requests.get(manga_chapters_url \
+                + manga_id + "/").text)
             chapter_formatted_list = []
             for entry in chapters['chapters']:
                 if entry[2] == None:
                     chapter_formatted_list.append(str(entry[0]) + ": -")
                 else:
-                    chapter_formatted_list.append(str(entry[0]) + ": " + html.unescape(str(entry[2])))
-            return [chapter_formatted_list[i:i+100] for i in range(0,len(chapter_formatted_list), 100)]
+                    chapter_formatted_list.append(str(entry[0]) + ": " + \
+                        html.unescape(str(entry[2])))
+            return [chapter_formatted_list[i:i+100] \
+                for i in range(0,len(chapter_formatted_list), 100)]
         else:
             return ["Manga with the title " + title + " not found."]
     def latest_chapter(self, title):
         manga_id = self.get_mangaID(title)
         if manga_id is not False:
-            chapters = json.loads(requests.get("http://www.mangaeden.com/api/manga/" + manga_id + "/").text)
+            chapters = json.loads(requests.get(manga_chapters_url \
+                + manga_id + "/").text)
             chapter_formatted_list = []
             for entry in chapters['chapters']:
-                chapter_formatted_list.append(str(entry[0]) + ": " + html.unescape(str(entry[2])))
+                chapter_formatted_list.append(str(entry[0]) + ": " \
+                    + html.unescape(str(entry[2])))
             return str(chapter_formatted_list[0])
         else:
             return "Manga with the title " + title + " not found."
@@ -90,7 +108,8 @@ class manga_class:
     def manga_info(self, title):
         manga_id = self.get_mangaID(title)
         if manga_id is not False:
-            title_data = json.loads(requests.get("http://www.mangaeden.com/api/manga/" + manga_id + "/").text)
+            title_data = json.loads(requests.get(manga_chapters_url \
+                + manga_id + "/").text)
             genres = []
             for entry in title_data['categories']:
                 genres.append(entry)
@@ -107,11 +126,13 @@ class manga_class:
         else:
             return "Manga with the title " + title + " not found."
 
-
-    def open_manga_chapter(self, title, chapterno, chatid, msgid):	# opens an entire manga chapter
+    # opens an entire manga chapter, sends each photo to chatid
+    def open_manga_chapter(self, title, chapterno, chatid, msgid):
         manga_ID = self.get_mangaID(title)
-        if manga_ID == False:   # if the manga is not found, tell user and end function
-            send.message_reply(chatid, "Manga with the title " + title + " not found.", msgid)
+        # if the manga is not found, tell user and exit
+        if manga_ID == False:
+            send.message_reply(chatid, "Manga with the title " + title \
+                + " not found.", msgid)
             return
 
         try: # check if chapter number is valid
@@ -121,7 +142,8 @@ class manga_class:
             return
 
         chapter_ID = 0
-        manga_chapters = json.loads(requests.get("http://www.mangaeden.com/api/manga/" + manga_ID + "/").text)
+        manga_chapters = json.loads(requests.get(manga_chapters_url \
+            + manga_ID + "/").text)
         for entry in manga_chapters['chapters']:
             if float(entry[0]) == float(chapterno):
                 chapter_ID = entry[3]
@@ -130,10 +152,13 @@ class manga_class:
         if chapter_ID == 0:
             send.message_reply(chatid, "Chapter not found.", msgid)
         else:
-            pages = json.loads(requests.get('http://www.mangaeden.com/api/chapter/' + chapter_ID + '/').text)  # list of pages of current manga
+            # list of pages of current manga
+            pages = json.loads(requests.get(manga_pages_url \
+                + chapter_ID + '/').text)
             for entry in sorted(pages['images']):
                 page_ID = entry[1]
-                filename = download_file_to_tempfile('https://cdn.mangaeden.com/mangasimg/' + page_ID)
+                filename = download_file_to_tempfile(manga_image_url \
+                    + page_ID)
                 send.send_photo(chatid, filename)
                 os.remove(filename)
             return
@@ -162,7 +187,8 @@ def main():
 
     while True:
         try:
-            get_updates = json.loads(requests.get(url + 'getUpdates', dict(offset=last_update)).text)
+            get_updates = json.loads(requests.get(url + 'getUpdates', \
+                dict(offset = last_update)).text)
         except ConnectionError:
             pass
 
@@ -170,10 +196,12 @@ def main():
             if last_update < update['update_id']:
                 last_update = update['update_id']
 
-                with open('last_update.txt', 'w') as f: # write last_update to file
+                # write last_update to file (ID of last 'update' received)
+                with open('last_update.txt', 'w') as f:
                     f.write(str(last_update))
 
-                if 'message' in update.keys(): # check if message or inline_query
+                # check if message or inline_query
+                if 'message' in update.keys():
                     message.message_id = update['message']['message_id']
                     message.chat_id = update['message']['chat']['id']
                     message.sender = update['message']['from']
